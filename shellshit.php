@@ -336,7 +336,7 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 						mkdir(str_replace("'", "", $_POST['makefile']), 0777, true);
 					}
 				}
-				
+			
 				?>
 						<div class="alert alert-success alert-dismissible fade show" role="alert">
 						  <strong>Done !</strong>File/Dir Created Successful !.
@@ -345,6 +345,19 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 						  </button>
 						</div>
 				<?php
+			}
+			//UPLOAD FILE 
+			elseif(!empty($_FILES['fileUpload']))
+			{
+				$path = $_GET['dir'];
+				$path = $path .'/'. basename( $_FILES['fileUpload']['name']);
+				//echo $path;
+				if(move_uploaded_file($_FILES['fileUpload']['tmp_name'], $path)) {
+				echo "<span class='text-success mb-3 mt-3'>The file ".  basename( $_FILES['fileUpload']['name']). 
+				" has been uploaded </span>";
+				} else{
+					echo "<span class='text-danger mb-3 mt-3'> * There was an error uploading the file, please try again!</span>";
+				}
 			}
 		
 		?>		
@@ -406,7 +419,7 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 					      <div class="modal-body">
 							<form action="" method="post" enctype="multipart/form-data">
 							<input type="file" name="fileUpload" class="form-control">
-							
+							<input type="hidden" name="path" value="<?php echo $_GET['dir']?>">
 					      </div>
 					      <div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -494,7 +507,7 @@ $serverhost =  $_SERVER['HTTP_HOST'];
 							echo str_replace($notallowed, $allowed, $data);
 							?>">Delete
 							</button>
-							<!-- Modal Rename File -->
+							<!-- Modal Delete File -->
 							<div class="modal fade" id="delete<?php 
 							$allowed = array("A11", "B12"); 
 							$notallowed = array(" ", ".");  
